@@ -628,6 +628,7 @@ input[type=checkbox]{width:14px;height:14px;cursor:pointer}
         <button class="btn btn-primary btn-sm" style="justify-content:center" onclick="drivePush()">⬆ Save to Drive</button>
         <button class="btn btn-ghost btn-sm" style="justify-content:center" onclick="drivePull()">⬇ Load from Drive</button>
       </div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-bottom:12px" onclick="driveListFiles()">📂 Switch to a different file</button>
       <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px">Auto-saves on every change. Tap ⬇ Load to pull the latest from the other person.</p>
       <div class="modal-actions">
         <button class="btn btn-danger btn-sm" onclick="driveDisconnect()">Disconnect</button>
@@ -870,8 +871,8 @@ async function driveListFiles(){
 
     if(!files.length){
       const emptyDiv = document.createElement('div');
-      emptyDiv.style.cssText = 'text-align:center;padding:20px;color:var(--text-muted);font-size:13px';
-      emptyDiv.innerHTML = 'No JSON files found in Drive.<br>Create a new file first.';
+      emptyDiv.style.cssText = 'text-align:center;padding:20px;color:var(--text-muted);font-size:13px;line-height:1.6';
+      emptyDiv.innerHTML = 'No files found.<br><small>Note: only files created by this app are shown.<br>Use <strong>Create new</strong> to make your first file.</small>';
       listEl.appendChild(emptyDiv);
       return;
     }
@@ -1453,7 +1454,7 @@ function renderYearPlanner(){
       <td class="p1-col">${toralBadge}</td>
       <td class="p2-col">${daleBadge}</td>
       <td class="cc-col">
-        <input class="cc-input" value="${ccVal||(toralOn&&daleOn?p1()+' + '+p2():toralOn?p1():daleOn?p2():'')}" placeholder="${wknd?'':'e.g. Nursery'}" data-date="${ds}" data-field="cc" onchange="saveCCNote(this)" ${wknd?'disabled':''}>
+        <input class="cc-input" value="${ccVal}" placeholder="${wknd?'':'e.g. Nursery'}" data-date="${ds}" data-field="cc" onchange="saveCCNote(this)" ${wknd?'disabled':''}>
       </td>
       <td><input class="cc-input" style="width:130px" value="${manualNote}" placeholder="Notes" data-date="${ds}" data-field="notes" onchange="saveCCNote(this)" ${wknd?'disabled':''}></td>
     </tr>`;
@@ -1508,10 +1509,9 @@ function renderChildcare(){
     if(toralOn) s.toralDays++;
     if(daleOn) s.daleDays++;
     if(toralOn&&daleOn) s.bothOff++;
-    // Count cc: manual entry OR AL on that day (auto-fill logic mirrors year planner)
+    // Count cc: only manual entries in the childcare column
     const manualCc=D.ccNotes[ds]?.cc||'';
-    const autoCc=toralOn||daleOn?'auto':'';
-    if((manualCc||autoCc).trim()) s.ccDays++;
+    if(manualCc.trim()) s.ccDays++;
   });
 
   // Compute date labels
