@@ -240,7 +240,7 @@ tr:hover td{background:rgba(45,107,181,.03)}
 /* Icon picker modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal-box{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:500px;padding:20px 16px 32px;animation:slideUp .25s ease}
+.modal-box{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:500px;padding:20px 16px 32px;animation:slideUp .25s ease;max-height:85vh;overflow-y:auto}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .modal-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--navy);margin-bottom:4px}
 .modal-sub{font-size:12px;color:var(--text-muted);margin-bottom:16px}
@@ -832,54 +832,83 @@ let driveSelectedFileName = null;
 
 async function driveListFiles(){
   if(!driveToken){ toast('Sign in first'); return; }
-  // Show browser view
   document.getElementById('drive-file-view').style.display='none';
-  document.getElementById('drive-browser-view').style.display='';
+  const bv = document.getElementById('drive-browser-view');
+  if(bv) bv.style.display='';
   const listEl = document.getElementById('drive-file-list');
   const statusEl = document.getElementById('drive-browser-status');
   const openBtn = document.getElementById('drive-open-btn');
-  listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">Loading files…</div>';
-  if(openBtn) openBtn.disabled = true;
+  listEl.innerHTML = '';
   driveSelectedFileId = null; driveSelectedFileName = null;
+  if(openBtn) openBtn.disabled = true;
+
+  // Show loading
+  const loadDiv = document.createElement('div');
+  loadDiv.style.cssText = 'text-align:center;padding:20px;color:var(--text-muted)';
+  loadDiv.textContent = 'Loading files from Drive…';
+  listEl.appendChild(loadDiv);
+
   try{
-    // Search for all JSON files the app has access to
+    // Broad search - all JSON files accessible to app
     const q = encodeURIComponent("mimeType='application/json' and trashed=false");
-    const r = await fetch(DRIVE_API+'/files?q='+q+'&fields=files(id,name,modifiedTime,size)&orderBy=modifiedTime+desc&pageSize=50',
-      {headers:{Authorization:'Bearer '+driveToken}});
-    if(!r.ok){ listEl.innerHTML='<div style="color:var(--rose);padding:12px">Could not load files</div>'; return; }
-    const data = await r.json();
-    const files = data.files||[];
-    if(!files.length){
-      listEl.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-muted)">No JSON files found.<br>Create a new file first.</div>';
+    const url = DRIVE_API+'/files?q='+q+'&fields=files(id,name,modifiedTime)&orderBy=modifiedTime+desc&pageSize=50';
+    const r = await fetch(url, {headers:{Authorization:'Bearer '+driveToken}});
+
+    if(!r.ok){
+      const err = await r.json().catch(()=>({}));
+      listEl.innerHTML = '';
+      const errDiv = document.createElement('div');
+      errDiv.style.cssText = 'color:var(--rose);padding:12px;font-size:13px';
+      errDiv.textContent = 'Could not load files: ' + (err.error?.message||r.status);
+      listEl.appendChild(errDiv);
       return;
     }
-    // Render file list
-    listEl.innerHTML = files.map(f=>{
-      const date = new Date(f.modifiedTime).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-      const time = new Date(f.modifiedTime).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-      return `<div class="file-item" data-id="${f.id}" data-name="${f.name}" onclick="selectDriveFile(this,'${f.id}','${f.name.replace(/'/g,"\\'")}')">
-        <span class="file-icon">📄</span>
-        <div class="file-info">
-          <div class="file-name">${f.name}</div>
-          <div class="file-date">Last modified: ${date} at ${time}</div>
-        </div>
-      </div>`;
-    }).join('');
-    if(statusEl) statusEl.textContent = files.length + ' file' + (files.length!==1?'s':'') + ' found';
+
+    const data = await r.json();
+    const files = data.files||[];
+    listEl.innerHTML = '';
+
+    if(!files.length){
+      const emptyDiv = document.createElement('div');
+      emptyDiv.style.cssText = 'text-align:center;padding:20px;color:var(--text-muted);font-size:13px';
+      emptyDiv.innerHTML = 'No JSON files found in Drive.<br>Create a new file first.';
+      listEl.appendChild(emptyDiv);
+      return;
+    }
+
+    files.forEach(function(f){
+      const item = document.createElement('div');
+      item.className = 'file-item';
+      const d = new Date(f.modifiedTime);
+      const dateStr = d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+      const timeStr = d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      item.innerHTML = '<span class="file-icon">\uD83D\uDCC4</span>'
+        +'<div class="file-info">'
+        +'<div class="file-name">'+f.name+'</div>'
+        +'<div class="file-date">Modified: '+dateStr+' at '+timeStr+'</div>'
+        +'</div>';
+      item.addEventListener('click', function(){
+        document.querySelectorAll('.file-item').forEach(function(i){ i.classList.remove('selected'); });
+        item.classList.add('selected');
+        driveSelectedFileId = f.id;
+        driveSelectedFileName = f.name;
+        const btn = document.getElementById('drive-open-btn');
+        if(btn) btn.disabled = false;
+      });
+      listEl.appendChild(item);
+    });
+
+    if(statusEl) statusEl.textContent = files.length + ' file'+(files.length!==1?'s':'')+' found';
+
   } catch(e){
-    listEl.innerHTML='<div style="color:var(--rose);padding:12px">Error: '+e.message+'</div>';
+    listEl.innerHTML = '';
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'color:var(--rose);padding:12px;font-size:13px';
+    errDiv.textContent = 'Error: '+e.message;
+    listEl.appendChild(errDiv);
   }
 }
 
-function selectDriveFile(el, id, name){
-  // Deselect all
-  document.querySelectorAll('.file-item').forEach(i=>i.classList.remove('selected'));
-  el.classList.add('selected');
-  driveSelectedFileId = id;
-  driveSelectedFileName = name;
-  const btn = document.getElementById('drive-open-btn');
-  if(btn) btn.disabled = false;
-}
 
 async function driveOpenSelected(){
   if(!driveSelectedFileId){ toast('Select a file first'); return; }
