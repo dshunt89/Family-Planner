@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Leave Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1a2744;
+  --navy-mid: #243358;
+  --blue: #2d6bb5;
+  --blue-light: #4a8fd4;
+  --teal: #0d9488;
+  --amber: #f59e0b;
+  --rose: #e11d48;
+  --p1: #d1fae5;
+  --p1-dark: #059669;
+  --p2: #dbeafe;
+  --p2-dark: #2563eb;
+  --school: #fef3c7;
+  --school-dark: #d97706;
+  --inset: #fce7f3;
+  --bh: #fee2e2;
+  --bh-dark: #dc2626;
+  --cc: #fed7aa;
+  --cc-dark: #ea580c;
+  --both: #a7f3d0;
+  --wknd: #f1f5f9;
+  --wknd-text: #94a3b8;
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 32px rgba(26,39,68,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f0f4f8;color:var(--text);min-height:100vh;font-size:14px}
+
+/* ── Layout ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;overflow-y:auto;transition:transform .28s cubic-bezier(.4,0,.2,1),box-shadow .28s;z-index:200}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0;padding-bottom:68px}
+
+/* ── Sidebar overlay backdrop ── */
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;opacity:0;transition:opacity .25s;pointer-events:none}
+.sidebar-backdrop.visible{opacity:1;pointer-events:auto}
+
+/* ── Sidebar ── */
+.sidebar-header{padding:20px 18px 14px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:flex-start;justify-content:space-between}
+.sidebar-header-text h1{font-family:'DM Serif Display',serif;font-size:17px;color:#fff;line-height:1.2}
+.sidebar-header-text p{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;letter-spacing:.03em}
+.sidebar-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;padding:2px 4px;line-height:1;display:none}
+.sidebar-close:hover{color:#fff}
+.nav-section{padding:12px 12px 4px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.nav-btn{display:flex;align-items:center;gap:10px;width:calc(100% - 16px);padding:9px 16px;background:none;border:none;color:rgba(255,255,255,.65);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;text-align:left;border-radius:6px;margin:1px 8px;transition:all .15s}
+.nav-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-btn.active{background:rgba(255,255,255,.13);color:#fff;font-weight:600}
+.nav-btn .icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.save-indicator{margin-top:auto;padding:14px;font-size:11px;color:rgba(255,255,255,.3);text-align:center;border-top:1px solid rgba(255,255,255,.06)}
+
+/* ── Top bar ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px 0 12px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
+.menu-toggle{background:none;border:none;color:var(--navy);cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.menu-toggle:hover{background:var(--surface2)}
+.menu-toggle svg{display:block}
+.topbar h2{font-family:'DM Serif Display',serif;font-size:18px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* ── Page content ── */
+.page{display:none;flex:1;padding:16px;overflow-y:auto}
+.page.active{display:block}
+
+/* ── Mobile bottom nav ── */
+.bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--navy);z-index:100;border-top:1px solid rgba(255,255,255,.12);padding-bottom:env(safe-area-inset-bottom,0)}
+.bottom-nav-inner{display:flex;width:100%;height:68px;align-items:stretch}
+.bnav-btn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:none;border-right:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.45);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;padding:0;margin:0;transition:background .15s,color .15s;position:relative;-webkit-tap-highlight-color:transparent;overflow:hidden}
+.bnav-btn:last-child{border-right:none}
+.bnav-btn::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue-light);opacity:0;transition:opacity .15s}
+.bnav-btn .bnav-icon{font-size:26px;line-height:1;display:block}
+.bnav-btn .bnav-label{font-size:9px;line-height:1;letter-spacing:.03em;text-transform:uppercase}
+.bnav-btn.active{color:#fff;background:rgba(255,255,255,.07)}
+.bnav-btn.active::before{opacity:1}
+.bnav-btn:active{background:rgba(255,255,255,.12)}
+
+/* ── Responsive breakpoints ── */
+@media(max-width:768px){
+  .sidebar{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%);box-shadow:none}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.3)}
+  .sidebar-backdrop{display:block}
+  .sidebar-close{display:block}
+  .page{padding:12px}
+  .topbar{padding:0 10px;height:50px}
+  .topbar h2{font-size:15px}
+  .topbar-actions .btn-label{display:none}
+  .al-header-stats{grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat-card{padding:10px 10px}
+  .stat-card .val{font-size:20px}
+  .form-row.cols-3{grid-template-columns:1fr 1fr}
+  .form-row.cols-4{grid-template-columns:1fr 1fr}
+  .form-row.cols-5{grid-template-columns:1fr 1fr}
+  .co-table{font-size:12px}
+  .co-table th,.co-table td{padding:6px 8px}
+  /* year end display fix */
+  #year-end-display{font-size:13px}
+  .form-row.cols-3 .field-group:last-child{grid-column:1/-1}
+}
+@media(max-width:480px){
+  .al-header-stats{grid-template-columns:repeat(3,1fr);gap:6px}
+  .stat-card{padding:8px}
+  .stat-card .val{font-size:18px}
+  .form-row.cols-2{grid-template-columns:1fr 1fr}
+  .form-row.cols-3{grid-template-columns:1fr}
+  .topbar-actions .btn-ghost{padding:6px 8px;font-size:12px}
+  input[type=date],input[type=text],input[type=number],select{font-size:16px}
+}
+
+/* ── Cards ── */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-header{padding:14px 20px;background:var(--navy);display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-family:'DM Serif Display',serif;font-size:15px;color:#fff;font-weight:400}
+.card-header .badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:11px;padding:3px 9px;border-radius:20px}
+.card-body{padding:20px}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-light)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:#fee2e2;color:var(--rose);border:1px solid #fecaca}
+.btn-danger:hover{background:#fecaca}
+
+/* ── Form ── */
+.form-row{display:grid;gap:14px;margin-bottom:14px}
+.form-row.cols-2{grid-template-columns:1fr 1fr}
+.form-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-row.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.form-row.cols-5{grid-template-columns:1fr 1fr 1fr 1fr 1fr}
+label{display:block;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+input[type=text],input[type=date],input[type=number],select{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);transition:border .15s}
+input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(45,107,181,.1)}
+input[readonly]{background:var(--surface2);color:var(--text-muted)}
+.field-group{display:flex;flex-direction:column}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--navy);color:#fff;padding:10px 12px;text-align:left;font-weight:500;font-size:11px;letter-spacing:.04em;white-space:nowrap}
+th:first-child{border-radius:0}
+td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(45,107,181,.03)}
+.tbl-actions{display:flex;gap:6px}
+
+/* ── Year Planner ── */
+.year-grid{overflow-x:auto}
+.planner-table{width:100%;border-collapse:collapse;font-size:12px;min-width:800px}
+.planner-table th{background:var(--navy);color:#fff;padding:8px 10px;font-size:11px;font-weight:500;white-space:nowrap;position:sticky;top:0;z-index:2}
+.planner-table td{padding:5px 10px;border-bottom:1px solid #f0f4f8;white-space:nowrap}
+.planner-table .month-cell{background:var(--navy-mid);color:#fff;font-weight:600;font-size:11px;text-align:center;letter-spacing:.05em;writing-mode:horizontal-lr;padding:6px 8px}
+/* Month row colour bands */
+.mth-0{background:#fef3f2}.mth-1{background:#fff7ed}.mth-2{background:#fefce8}
+.mth-3{background:#f0fdf4}.mth-4{background:#ecfdf5}.mth-5{background:#f0fdfa}
+.mth-6{background:#eff6ff}.mth-7{background:#eef2ff}.mth-8{background:#faf5ff}
+.mth-9{background:#fdf4ff}.mth-10{background:#fff1f2}.mth-11{background:#fff8f1}
+/* Month date cell accent */
+.mth-0 td.date-col{border-left:3px solid #fca5a5}
+.mth-1 td.date-col{border-left:3px solid #fdba74}
+.mth-2 td.date-col{border-left:3px solid #fde047}
+.mth-3 td.date-col{border-left:3px solid #86efac}
+.mth-4 td.date-col{border-left:3px solid #34d399}
+.mth-5 td.date-col{border-left:3px solid #5eead4}
+.mth-6 td.date-col{border-left:3px solid #93c5fd}
+.mth-7 td.date-col{border-left:3px solid #a5b4fc}
+.mth-8 td.date-col{border-left:3px solid #c4b5fd}
+.mth-9 td.date-col{border-left:3px solid #f0abfc}
+.mth-10 td.date-col{border-left:3px solid #fda4af}
+.mth-11 td.date-col{border-left:3px solid #fb923c}
+.day-weekend{background:var(--wknd);color:var(--wknd-text)}
+.day-weekend td{color:var(--wknd-text)}
+.day-bh{background:var(--bh)}
+.day-school{background:var(--school)}
+.day-inset{background:var(--inset)}
+.p1-al td.p1-col{background:var(--p1);font-weight:600;color:var(--p1-dark)}
+.p2-al td.p2-col{background:var(--p2);font-weight:600;color:var(--p2-dark)}
+.p1-al.p2-al td.p1-col,
+.p1-al.p2-al td.p2-col{background:var(--both)}
+.cc-col{background:var(--cc)}
+.badge-al{display:inline-block;background:var(--p1);color:var(--p1-dark);border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600}
+.badge-al.p2{background:var(--p2);color:var(--p2-dark)}
+.badge-event{display:inline-block;background:var(--school);color:var(--school-dark);border-radius:4px;padding:1px 7px;font-size:11px}
+.badge-bh{background:var(--bh);color:var(--bh-dark)}
+.badge-inset{background:var(--inset);color:#9d174d}
+.cc-input{width:80px;padding:3px 7px;border:1px solid var(--border);border-radius:4px;font-size:11px;background:rgba(255,255,255,.8)}
+
+/* ── AL Summary ── */
+.al-header-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.stat-card .val{font-family:'DM Serif Display',serif;font-size:28px;color:var(--navy)}
+.stat-card .lbl{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.stat-card.highlight{background:var(--navy);border-color:var(--navy)}
+.stat-card.highlight .val{color:#fff}
+.stat-card.highlight .lbl{color:rgba(255,255,255,.5)}
+
+/* ── Childcare Overview ── */
+.co-table td.cc-num{text-align:center;font-weight:600;font-family:'DM Serif Display',serif;font-size:16px}
+.co-table td.possible{font-size:12px;color:var(--text-muted);text-align:center}
+.progress-bar{height:6px;background:#e2e8f0;border-radius:3px;margin-top:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .4s}
+
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab-btn{padding:10px 18px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .15s}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.tab-btn:hover{color:var(--text)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:100px;right:16px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateY(0)}
+.sync-bar{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:12px;color:var(--text-muted);flex-shrink:0}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0;transition:background .3s}
+.sync-dot.connected{background:#10b981}
+.sync-dot.syncing{background:#f59e0b;animation:pulse .8s infinite}
+.sync-dot.error{background:#ef4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* Icon picker modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:500px;padding:20px 16px 32px;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--navy);margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--text-muted);margin-bottom:16px}
+.icon-tab-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.icon-tab-btn{flex:1;min-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border:2px solid var(--border);border-radius:8px;background:var(--surface2);cursor:pointer;font-size:11px;color:var(--text-muted);font-family:'DM Sans',sans-serif}
+.icon-tab-btn.selected{border-color:var(--blue);background:var(--p2);color:var(--blue)}
+.icon-tab-btn .tab-icon-preview{font-size:24px;line-height:1}
+.skin-tone-btn{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:border-color .12s,transform .12s;padding:0;background:none}
+.skin-tone-btn:hover{transform:scale(1.15)}
+.skin-tone-btn.active{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,107,181,.3)}
+.emoji-cat-tabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:10px;padding-bottom:4px;scrollbar-width:none}
+.emoji-cat-tabs::-webkit-scrollbar{display:none}
+.emoji-cat-tab{flex-shrink:0;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--text-muted);white-space:nowrap;transition:all .12s}
+.emoji-cat-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:220px;overflow-y:auto;margin-bottom:16px;padding:2px;scrollbar-width:thin}
+.emoji-opt{font-size:20px;padding:5px;border-radius:6px;cursor:pointer;text-align:center;background:none;border:none;line-height:1;transition:background .1s,transform .1s}
+.emoji-opt:hover{background:var(--surface2);transform:scale(1.12)}
+.emoji-opt:active{transform:scale(.92)}
+.emoji-opt.picked{background:var(--p2);outline:2px solid var(--blue)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* ── Key ── */
+.key-grid{display:flex;flex-wrap:wrap;gap:10px}
+.key-item{display:flex;align-items:center;gap:6px;font-size:12px}
+.key-swatch{width:16px;height:16px;border-radius:3px;border:1px solid rgba(0,0,0,.08);flex-shrink:0}
+
+/* ── Misc ── */
+.section-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--navy);margin-bottom:14px}
+.hint{font-size:11px;color:var(--text-muted);margin-top:6px;font-style:italic}
+.divider{height:1px;background:var(--border);margin:18px 0}
+.empty-row td{text-align:center;color:var(--text-muted);font-style:italic;padding:24px}
+select option{padding:4px}
+.al-row-event{min-width:160px}
+.filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.filter-bar label{margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);font-weight:400}
+input[type=checkbox]{width:14px;height:14px;cursor:pointer}
+.sticky-thead th{position:sticky;top:0;z-index:2}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Sidebar backdrop (mobile) -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-header-text">
+      <h1>Family Leave<br>Planner</h1>
+      <p>2025–26 Academic Year</p>
+    </div>
+    <button class="sidebar-close" onclick="closeSidebar()" aria-label="Close menu">✕</button>
+  </div>
+  <div style="padding:8px 0 4px">
+    <div class="nav-section">Planning</div>
+    <button class="nav-btn active" onclick="showPage('data-input')"><span class="icon" id="sidebar-icon-0">⚙️</span>Data Input</button>
+    <button class="nav-btn" id="nav-toral" onclick="showPage('toral-al')"><span class="icon" id="sidebar-icon-1">🌿</span><span id="nav-toral-lbl">Toral</span> – Leave</button>
+    <button class="nav-btn" id="nav-dale" onclick="showPage('dale-al')"><span class="icon" id="sidebar-icon-2">🔷</span><span id="nav-dale-lbl">Dale</span> – Leave</button>
+    <div class="nav-section">Views</div>
+    <button class="nav-btn" onclick="showPage('year-planner')"><span class="icon" id="sidebar-icon-3">📅</span>Year Planner</button>
+    <button class="nav-btn" onclick="showPage('childcare')"><span class="icon" id="sidebar-icon-4">👶</span>Childcare Overview</button>
+    <div class="nav-section">Info</div>
+    <button class="nav-btn" onclick="showPage('guide')"><span class="icon">📖</span>How to Use</button>
+  </div>
+  <div class="save-indicator" id="save-indicator">All changes saved</div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/>
+        </svg>
+      </button>
+      <h2 id="page-title">Data Input</h2>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openIconModal()" title="Customise bottom bar" style="font-size:15px;padding:5px 10px">🎨</button>
+      <button class="btn btn-ghost btn-sm" onclick="openNewYearModal()" title="Start new academic year" style="font-size:15px;padding:5px 10px">🎓</button>
+      <button class="btn btn-ghost btn-sm" onclick="openDriveModal()" title="Connect to Google Drive" style="font-size:15px;padding:5px 10px" id="drive-btn">☁️</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ <span class="btn-label">Export</span></button>
+      <button class="btn btn-ghost btn-sm" onclick="importData()">⬆ <span class="btn-label">Import</span></button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+    </div>
+  </div>
+
+  <!-- Drive status bar -->
+  <div class="sync-bar" id="drive-bar" style="display:none">
+    <div class="sync-dot" id="drive-dot"></div>
+    <span id="drive-status">Not connected</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--text-muted)" id="drive-file-info"></span>
+  </div>
+
+  <!-- ══ DATA INPUT PAGE ══ -->
+  <div class="page active" id="page-data-input">
+
+    <!-- Start Date -->
+    <div class="card">
+      <div class="card-header"><h3>📅 Academic Year</h3></div>
+      <div class="card-body">
+        <div class="form-row cols-2" style="max-width:480px">
+          <div class="field-group">
+            <label>Year Start Date</label>
+            <input type="date" id="year-start" value="2025-09-01" onchange="save();renderAll()">
+          </div>
+          <div class="field-group">
+            <label>Year End Date (auto)</label>
+            <input type="date" id="year-end" onchange="save();renderAll()">
+          </div>
+        </div>
+        <p class="hint">Year Planner shows 366 days from the start date</p>
+      </div>
+    </div>
+
+    <!-- Term Dates -->
+    <div class="card">
+      <div class="card-header"><h3>🏫 Term Dates</h3><span class="badge">England</span></div>
+      <div class="card-body">
+        <p class="hint" style="margin-bottom:14px">Update to match your school's actual dates</p>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table style="min-width:560px">
+          <thead><tr><th>Term</th><th>Term Start</th><th>Term End</th><th>HT Start</th><th>HT End</th></tr></thead>
+          <tbody id="terms-tbody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank Holidays -->
+    <div class="card">
+      <div class="card-header"><h3>🏦 Bank Holidays</h3><span class="badge" id="bh-count">0 entered</span></div>
+      <div class="card-body">
+        <div id="bh-list" style="overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addBH()">+ Add Bank Holiday</button>
+      </div>
+    </div>
+
+    <!-- Inset Days -->
+    <div class="card">
+      <div class="card-header"><h3>📌 Inset Days</h3><span class="badge" id="inset-count">0 entered</span></div>
+      <div class="card-body">
+        <p class="hint" style="margin-bottom:14px">Up to 10 school inset days (school closed, not a holiday)</p>
+        <div id="inset-list" style="overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addInset()" id="add-inset-btn">+ Add Inset Day</button>
+      </div>
+    </div>
+
+  </div><!-- end data-input -->
+
+  <!-- ══ AL SUMMARY PAGES ══ -->
+  <div class="page" id="page-toral-al">
+    <div class="al-header-stats" id="toral-stats"></div>
+    <div class="card">
+      <div class="card-header"><h3>🌿 <span id="al-toral-hdr">Toral</span> – Annual Leave Entries</h3></div>
+      <div class="card-body">
+        <div class="form-row cols-2" style="max-width:360px;margin-bottom:16px">
+          <div class="field-group"><label>AL Allowance (days)</label><input type="number" id="toral-allowance" value="25" min="0" max="60" onchange="save();renderALStats('toral')"></div>
+        </div>
+        <div id="toral-al-table"></div>
+        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="addALRow('toral')">+ Add Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-dale-al">
+    <div class="al-header-stats" id="dale-stats"></div>
+    <div class="card">
+      <div class="card-header"><h3>🔷 <span id="al-dale-hdr">Dale</span> – Annual Leave Entries</h3></div>
+      <div class="card-body">
+        <div class="form-row cols-2" style="max-width:360px;margin-bottom:16px">
+          <div class="field-group"><label>AL Allowance (days)</label><input type="number" id="dale-allowance" value="25" min="0" max="60" onchange="save();renderALStats('dale')"></div>
+        </div>
+        <div id="dale-al-table"></div>
+        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="addALRow('dale')">+ Add Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ YEAR PLANNER ══ -->
+  <div class="page" id="page-year-planner">
+    <div class="filter-bar">
+      <label><input type="checkbox" id="filter-hide-wknd" checked onchange="renderYearPlanner()"> Hide weekends</label>
+      <label><input type="checkbox" id="filter-hide-term" onchange="renderYearPlanner()"> Hide term-time (no event)</label>
+      <label style="margin-left:auto">Jump to month:
+        <select id="month-jump" onchange="jumpToMonth(this.value)" style="width:auto;display:inline-block;margin-left:6px"></select>
+      </label>
+    </div>
+    <div class="key-grid" style="margin-bottom:14px">
+      <div class="key-item"><div class="key-swatch" style="background:var(--p1)"></div><span id="key-toral">Toral</span> AL</div>
+      <div class="key-item"><div class="key-swatch" style="background:var(--p2)"></div><span id="key-dale">Dale</span> AL</div>
+      <div class="key-item"><div class="key-swatch" style="background:var(--both)"></div>Both off</div>
+      <div class="key-item"><div class="key-swatch" style="background:var(--school)"></div>School holiday</div>
+      <div class="key-item"><div class="key-swatch" style="background:var(--inset)"></div>Inset day</div>
+      <div class="key-item"><div class="key-swatch" style="background:var(--bh)"></div>Bank holiday</div>
+      <div class="key-item"><div class="key-swatch" style="background:var(--cc)"></div>Childcare</div>
+      <div class="key-item"><div class="key-swatch" style="background:var(--wknd)"></div>Weekend</div>
+    </div>
+    <div class="card" style="overflow:hidden">
+      <div class="year-grid">
+        <table class="planner-table sticky-thead" id="year-table">
+          <thead><tr>
+            <th style="min-width:90px">Date</th>
+            <th style="width:38px">Day</th>
+            <th style="min-width:160px">Holiday / Event</th>
+            <th style="min-width:70px" id="yp-th-toral">Toral</th>
+            <th style="min-width:70px" id="yp-th-dale">Dale</th>
+            <th style="min-width:90px">Childcare</th>
+            <th style="min-width:140px">Notes</th>
+          </tr></thead>
+          <tbody id="year-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CHILDCARE OVERVIEW ══ -->
+  <div class="page" id="page-childcare">
+    <div class="card">
+      <div class="card-header"><h3>👶 Childcare Coverage Overview</h3></div>
+      <div class="card-body">
+        <p class="hint" style="margin-bottom:12px">CC Days = childcare entered in Year Planner. Both Off = <span id="co-hint-names">Toral &amp; Dale</span> both have AL on same day.</p>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="co-table" style="min-width:620px">
+          <thead><tr>
+            <th>Period</th>
+            <th style="text-align:center">Days</th>
+            <th style="text-align:center">CC</th>
+            <th style="text-align:center;min-width:110px">CC / Possible</th>
+            <th style="text-align:center" id="co-th-toral">Toral</th>
+            <th style="text-align:center" id="co-th-dale">Dale</th>
+            <th style="text-align:center">Both Off</th>
+          </tr></thead>
+          <tbody id="co-tbody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>📊 Summary</h3></div>
+      <div class="card-body" id="co-summary"></div>
+    </div>
+  </div>
+
+  <!-- ══ GUIDE ══ -->
+  <div class="page" id="page-guide">
+    <div class="card">
+      <div class="card-header"><h3>📖 How to Use</h3></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <div class="section-title">Getting Started</div>
+            <ol style="padding-left:18px;line-height:2">
+              <li>Set your <strong>Academic Year Start Date</strong> in Data Input</li>
+              <li>Update <strong>Term Dates</strong> to match your school</li>
+              <li>Enter all <strong>Bank Holidays</strong> for the year</li>
+              <li>Add any <strong>Inset Days</strong> (up to 10)</li>
+              <li>Add leave entries in <strong id="guide-p1-lbl">Toral</strong> – Leave and <strong id="guide-p2-lbl">Dale</strong> – Leave</li>
+              <li>View the <strong>Year Planner</strong> to see the full picture</li>
+              <li>Check <strong>Childcare Overview</strong> for coverage gaps</li>
+            </ol>
+          </div>
+          <div>
+            <div class="section-title">Leave Events</div>
+            <p style="line-height:1.8;color:var(--text-muted);font-size:13px">
+              When adding AL entries, select an <strong>Event</strong> from the dropdown. School holiday events auto-fill start/end dates from your term dates. Select <strong>Annual Leave</strong> to enter custom dates manually. Use <strong>Half Day</strong> to deduct 0.5 days.
+            </p>
+            <div class="divider"></div>
+            <div class="section-title">Childcare Column</div>
+            <p style="line-height:1.8;color:var(--text-muted);font-size:13px">
+              In the Year Planner, type anything in the <strong>Childcare</strong> column to mark that day as childcare arranged. The Childcare Overview counts these automatically.
+            </p>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="section-title">Colour Key</div>
+        <div class="key-grid">
+          <div class="key-item"><div class="key-swatch" style="background:var(--p1)"></div><span id="guide-key-toral">Toral</span> Annual Leave</div>
+          <div class="key-item"><div class="key-swatch" style="background:var(--p2)"></div><span id="guide-key-dale">Dale</span> Annual Leave</div>
+          <div class="key-item"><div class="key-swatch" style="background:var(--both)"></div>Both Parents Off</div>
+          <div class="key-item"><div class="key-swatch" style="background:var(--school)"></div>School Holiday / Half Term</div>
+          <div class="key-item"><div class="key-swatch" style="background:var(--inset)"></div>Inset Day</div>
+          <div class="key-item"><div class="key-swatch" style="background:var(--bh)"></div>Bank Holiday</div>
+          <div class="key-item"><div class="key-swatch" style="background:var(--cc)"></div>Childcare Arranged</div>
+          <div class="key-item"><div class="key-swatch" style="background:var(--wknd)"></div>Weekend</div>
+        </div>
+        <div class="divider"></div>
+        <p style="font-size:12px;color:var(--text-muted)">Data is saved automatically in your browser's localStorage. Use Export/Import JSON to back up or transfer data.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+</div><!-- end app -->
+
+<!-- Mobile bottom navigation -->
+<nav class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bnav-btn active" onclick="showPage('data-input')" data-page="data-input">
+      <span class="bnav-icon">⚙️</span><span class="bnav-label">Input</span>
+    </button>
+    <button class="bnav-btn" onclick="showPage('toral-al')" data-page="toral-al">
+      <span class="bnav-icon">🌿</span><span class="bnav-label" id="bnav-lbl-toral">Toral</span>
+    </button>
+    <button class="bnav-btn" onclick="showPage('dale-al')" data-page="dale-al">
+      <span class="bnav-icon">🔷</span><span class="bnav-label" id="bnav-lbl-dale">Dale</span>
+    </button>
+    <button class="bnav-btn" onclick="showPage('year-planner')" data-page="year-planner">
+      <span class="bnav-icon">📅</span><span class="bnav-label">Planner</span>
+    </button>
+    <button class="bnav-btn" onclick="showPage('childcare')" data-page="childcare">
+      <span class="bnav-icon">👶</span><span class="bnav-label">Childcare</span>
+    </button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- Google Drive Modal -->
+<div class="modal-overlay" id="drive-modal" onclick="if(event.target===this)closeDriveModal()">
+  <div class="modal-box">
+    <div class="modal-title">☁️ Google Drive Sync</div>
+    <div class="modal-sub" style="margin-bottom:16px">Save your planner data to a JSON file in Google Drive. Both people sign in and point to the same file to share data.</div>
+
+    <div id="drive-setup-view">
+      <div style="background:var(--surface2);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.8;margin-bottom:16px">
+        <div>📋 <strong>How it works:</strong></div>
+        <ol style="padding-left:18px;margin-top:6px">
+          <li>Sign in with Google below</li>
+          <li>Choose or create a <code>planner-data.json</code> file in your shared Drive folder</li>
+          <li>Both people sign in and select the same file</li>
+          <li>Changes save automatically — tap ☁️ to sync manually</li>
+        </ol>
+      </div>
+      <div style="display:none">
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Google Client ID</label>
+        <input type="text" id="gapi-client-id" placeholder="your-client-id.apps.googleusercontent.com" value="549860156222-g5gkcmk6nt40rhunj14nrtgo0pdik1oa.apps.googleusercontent.com"
+          style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace">
+
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;gap:8px" onclick="driveSignIn()">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+        Sign in with Google
+      </button>
+    </div>
+
+    <div id="drive-file-view" style="display:none">
+      <div style="text-align:center;padding:8px 0 14px">
+        <div style="font-size:28px;margin-bottom:8px">✅</div>
+        <div style="font-weight:600;margin-bottom:4px" id="drive-user-name">Signed in</div>
+        <div style="font-size:12px;color:var(--text-muted)" id="drive-user-email"></div>
+      </div>
+      <div style="display:grid;gap:8px;margin-bottom:14px">
+        <button class="btn btn-primary" style="justify-content:center" onclick="driveCreateFile()">📄 Create new planner-data.json</button>
+        <button class="btn btn-ghost" style="justify-content:center" onclick="drivePickFile()">📂 Open existing file from Drive</button>
+      </div>
+      <div id="drive-file-status" style="font-size:12px;color:var(--text-muted);text-align:center;min-height:20px"></div>
+      <div class="modal-actions" style="margin-top:12px">
+        <button class="btn btn-ghost btn-sm" onclick="driveSignOut()">Sign out</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeDriveModal()">Close</button>
+      </div>
+    </div>
+
+    <div id="drive-connected-view" style="display:none">
+      <div style="text-align:center;padding:4px 0 12px">
+        <div style="font-size:28px;margin-bottom:6px">☁️</div>
+        <div style="font-weight:600;font-size:14px" id="drive-conn-filename">planner-data.json</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px" id="drive-conn-info">Connected</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <button class="btn btn-primary btn-sm" style="justify-content:center" onclick="drivePush()">⬆ Save to Drive</button>
+        <button class="btn btn-ghost btn-sm" style="justify-content:center" onclick="drivePull()">⬇ Load from Drive</button>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px">Auto-saves on every change. Tap ⬇ Load to pull the latest from the other person.</p>
+      <div class="modal-actions">
+        <button class="btn btn-danger btn-sm" onclick="driveDisconnect()">Disconnect</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeDriveModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Academic Year Modal -->
+<div class="modal-overlay" id="newyear-modal" onclick="if(event.target===this)closeNewYearModal()">
+  <div class="modal-box">
+    <div class="modal-title">🎓 Start New Academic Year</div>
+    <div class="modal-sub" style="margin-bottom:16px">This will roll your planner forward to the next academic year. Your current data will be exported as a backup first.</div>
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8">
+      <div><strong>Will be kept:</strong> Parent names, AL allowances, icon customisations</div>
+      <div><strong>Will be cleared:</strong> AL entries, childcare notes, bank holidays, inset days</div>
+      <div><strong>Will roll forward:</strong> Dates (start +12 months, end +12 months)</div>
+      <div style="margin-top:8px"><strong>New year start:</strong> <span id="ny-preview-start" style="color:var(--blue);font-weight:600"></span></div>
+      <div><strong>New year end:</strong> <span id="ny-preview-end" style="color:var(--blue);font-weight:600"></span></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeNewYearModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="rolloverYear()">⬇ Export &amp; Roll Over</button>
+    </div>
+  </div>
+</div>
+
+<!-- Icon Picker Modal -->
+<div class="modal-overlay" id="icon-modal" onclick="if(event.target===this)closeIconModal()">
+  <div class="modal-box">
+    <div class="modal-title">Customise Bottom Bar</div>
+    <div class="modal-sub">Tap a tab to change its icon. You can also rename the parents below.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Parent 1 Name</label>
+        <input type="text" id="name-p1" placeholder="Toral" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:'DM Sans',sans-serif">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Parent 2 Name</label>
+        <input type="text" id="name-p2" placeholder="Dale" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:'DM Sans',sans-serif">
+      </div>
+    </div>
+    <div class="icon-tab-row" id="icon-tab-row"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Skin Tone:</span>
+      <div id="skin-tone-picker" style="display:flex;gap:4px"></div>
+    </div>
+    <div class="emoji-cat-tabs" id="emoji-cat-tabs"></div>
+    <div class="emoji-grid" id="emoji-grid"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeIconModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveIconModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// GOOGLE DRIVE SYNC (Google Identity Services)
+// ═══════════════════════════════════════════════════════════════
+let driveToken = null;
+let driveFileId = localStorage.getItem('driveFileId') || null;
+let driveFileName = localStorage.getItem('driveFileName') || 'planner-data.json';
+let drivePushTimer = null;
+let tokenClient = null;
+const DRIVE_CLIENT_ID = '549860156222-g5gkcmk6nt40rhunj14nrtgo0pdik1oa.apps.googleusercontent.com';
+const DRIVE_API = 'https://www.googleapis.com/drive/v3';
+const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3';
+
+function driveSetStatus(state, msg){
+  const dot = document.getElementById('drive-dot');
+  const txt = document.getElementById('drive-status');
+  if(dot) dot.className = 'sync-dot ' + (state||'');
+  if(txt) txt.textContent = msg;
+}
+
+function openDriveModal(){
+  const inp = document.getElementById('gapi-client-id');
+  if(inp && !inp.value) inp.value = DRIVE_CLIENT_ID;
+  const saved = localStorage.getItem('driveClientId')||DRIVE_CLIENT_ID;
+  if(driveToken && driveFileId) showDriveConnectedView();
+  else if(driveToken) showDriveFileView();
+  else showDriveSetupView();
+  document.getElementById('drive-modal').classList.add('open');
+}
+function closeDriveModal(){ document.getElementById('drive-modal').classList.remove('open'); }
+function showDriveSetupView(){
+  document.getElementById('drive-setup-view').style.display='';
+  document.getElementById('drive-file-view').style.display='none';
+  document.getElementById('drive-connected-view').style.display='none';
+}
+function showDriveFileView(){
+  document.getElementById('drive-setup-view').style.display='none';
+  document.getElementById('drive-file-view').style.display='';
+  document.getElementById('drive-connected-view').style.display='none';
+}
+function showDriveConnectedView(){
+  document.getElementById('drive-setup-view').style.display='none';
+  document.getElementById('drive-file-view').style.display='none';
+  document.getElementById('drive-connected-view').style.display='';
+  const fn = document.getElementById('drive-conn-filename');
+  if(fn) fn.textContent = driveFileName||'planner-data.json';
+}
+
+function driveSignIn(){
+  const inp = document.getElementById('gapi-client-id');
+  const clientId = (inp && inp.value.trim()) || DRIVE_CLIENT_ID;
+  if(!clientId){ toast('Enter your Client ID first'); return; }
+  localStorage.setItem('driveClientId', clientId);
+
+  // Load GIS library if not already loaded
+  if(!window.google || !window.google.accounts){
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.onload = () => initTokenClient(clientId);
+    script.onerror = () => toast('Could not load Google sign-in library');
+    document.head.appendChild(script);
+  } else {
+    initTokenClient(clientId);
+  }
+}
+
+function initTokenClient(clientId){
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'https://www.googleapis.com/auth/drive.file openid profile email',
+    callback: (resp) => {
+      if(resp.error){ toast('Sign in failed: ' + resp.error); return; }
+      driveToken = resp.access_token;
+      driveGetUserInfo();
+    }
+  });
+  tokenClient.requestAccessToken();
+}
+
+async function driveGetUserInfo(){
+  if(!driveToken) return;
+  try{
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+      {headers:{Authorization:'Bearer '+driveToken}});
+    if(r.ok){
+      const u = await r.json();
+      const nameEl = document.getElementById('drive-user-name');
+      const emailEl = document.getElementById('drive-user-email');
+      if(nameEl) nameEl.textContent = u.name||'Signed in';
+      if(emailEl) emailEl.textContent = u.email||'';
+    } else {
+      // Userinfo failed but token is valid - proceed anyway
+      const nameEl = document.getElementById('drive-user-name');
+      if(nameEl) nameEl.textContent = 'Signed in';
+    }
+  } catch(e){
+    // Non-fatal - token works, just can't get profile
+    const nameEl = document.getElementById('drive-user-name');
+    if(nameEl) nameEl.textContent = 'Signed in';
+  }
+  // Always proceed to file view if we have a token
+  showDriveFileView();
+  if(driveFileId) showDriveConnectedView();
+}
+
+async function driveCreateFile(){
+  if(!driveToken){ toast('Sign in first'); return; }
+  const statusEl = document.getElementById('drive-file-status');
+  if(statusEl) statusEl.textContent = 'Creating file…';
+  try{
+    const boundary = 'planner_' + Date.now();
+    const meta = JSON.stringify({name:'planner-data.json',mimeType:'application/json'});
+    const fileContent = JSON.stringify(D,null,2);
+    const CRLF = '\r\n';
+    const body = '--'+boundary+CRLF
+      +'Content-Type: application/json; charset=UTF-8'+CRLF+CRLF
+      +meta+CRLF
+      +'--'+boundary+CRLF
+      +'Content-Type: application/json'+CRLF+CRLF
+      +fileContent+CRLF
+      +'--'+boundary+'--';
+    const r = await fetch(DRIVE_UPLOAD+'/files?uploadType=multipart',{
+      method:'POST',
+      headers:{Authorization:'Bearer '+driveToken,'Content-Type':'multipart/related; boundary='+boundary},
+      body: body
+    });
+    const f = await r.json();
+    if(f.id){
+      driveFileId = f.id; driveFileName = f.name||'planner-data.json';
+      localStorage.setItem('driveFileId', driveFileId);
+      localStorage.setItem('driveFileName', driveFileName);
+      showDriveConnectedView();
+      activateDriveBar();
+      toast('File created in Drive!');
+    } else {
+      if(statusEl) statusEl.textContent = 'Failed – check permissions';
+    }
+  } catch(e){ if(statusEl) statusEl.textContent = 'Error: '+e.message; }
+}
+
+async function drivePickFile(){
+  if(!driveToken){ toast('Sign in first'); return; }
+  const statusEl = document.getElementById('drive-file-status');
+  if(statusEl) statusEl.textContent = 'Searching Drive…';
+  try{
+    const q = encodeURIComponent("name='planner-data.json' and trashed=false");
+    const r = await fetch(DRIVE_API+'/files?q='+q+'&fields=files(id,name,modifiedTime)',
+      {headers:{Authorization:'Bearer '+driveToken}});
+    if(!r.ok){ if(statusEl) statusEl.textContent='Could not search Drive'; return; }
+    const data = await r.json();
+    const files = data.files||[];
+    if(!files.length){
+      if(statusEl) statusEl.textContent = 'No planner-data.json found – create one first.';
+      return;
+    }
+    const chosen = files[0];
+    driveFileId = chosen.id; driveFileName = chosen.name;
+    localStorage.setItem('driveFileId', driveFileId);
+    localStorage.setItem('driveFileName', driveFileName);
+    await drivePull();
+    showDriveConnectedView();
+    activateDriveBar();
+  } catch(e){ if(statusEl) statusEl.textContent = 'Error: '+e.message; }
+}
+
+async function drivePush(){
+  if(!driveToken||!driveFileId){ toast('Not connected to Drive'); return; }
+  driveSetStatus('syncing','Saving…');
+  try{
+    const r = await fetch(DRIVE_UPLOAD+'/files/'+driveFileId+'?uploadType=media',{
+      method:'PATCH',
+      headers:{Authorization:'Bearer '+driveToken,'Content-Type':'application/json'},
+      body: JSON.stringify(D,null,2)
+    });
+    if(r.ok){
+      driveSetStatus('connected','Saved ✓');
+      const info = document.getElementById('drive-conn-info');
+      if(info) info.textContent = 'Saved: '+new Date().toLocaleTimeString();
+    } else {
+      const err = await r.json();
+      if(err.error?.status==='UNAUTHENTICATED'){ driveToken=null; driveSetStatus('error','Token expired – re-sign in'); }
+      else driveSetStatus('error','Save failed');
+    }
+  } catch(e){ driveSetStatus('error','No connection'); }
+}
+
+async function drivePull(){
+  if(!driveToken||!driveFileId){ toast('Not connected to Drive'); return; }
+  driveSetStatus('syncing','Loading…');
+  try{
+    const r = await fetch(DRIVE_API+'/files/'+driveFileId+'?alt=media',
+      {headers:{Authorization:'Bearer '+driveToken}});
+    if(r.ok){
+      const remote = await r.json();
+      D = remote;
+      localStorage.setItem('familyPlanner',JSON.stringify(D));
+      initUI(); renderAll(); applyNavIcons(); applyNames();
+      driveSetStatus('connected','Loaded ✓');
+      const info = document.getElementById('drive-conn-info');
+      if(info) info.textContent = 'Loaded: '+new Date().toLocaleTimeString();
+      toast('Loaded latest from Drive');
+    } else {
+      if(r.status===401){ driveToken=null; driveSetStatus('error','Token expired – re-sign in'); }
+      else driveSetStatus('error','Load failed');
+    }
+  } catch(e){ driveSetStatus('error','No connection'); }
+}
+
+function activateDriveBar(){
+  const bar = document.getElementById('drive-bar');
+  if(bar) bar.style.display = 'flex';
+  driveSetStatus('connected','Drive connected');
+  const info = document.getElementById('drive-file-info');
+  if(info) info.textContent = driveFileName||'planner-data.json';
+}
+
+function driveSignOut(){
+  driveToken = null; tokenClient = null;
+  showDriveSetupView();
+  toast('Signed out');
+}
+
+function driveDisconnect(){
+  driveToken = null; driveFileId = null; driveFileName = null; tokenClient = null;
+  localStorage.removeItem('driveFileId'); localStorage.removeItem('driveFileName');
+  const bar = document.getElementById('drive-bar');
+  if(bar) bar.style.display = 'none';
+  driveSetStatus('','Not connected');
+  closeDriveModal();
+  toast('Disconnected from Drive');
+}
+
+function driveMaybePush(){
+  if(driveToken && driveFileId){
+    clearTimeout(drivePushTimer);
+    drivePushTimer = setTimeout(drivePush, 2000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA MODEL
+// ═══════════════════════════════════════════════════════════════
+const DEFAULT_TERMS = [
+  {name:'Autumn Term', start:'2025-09-03', end:'2025-12-19', htStart:'2025-10-27', htEnd:'2025-10-31'},
+  {name:'Spring Term', start:'2026-01-05', end:'2026-04-01', htStart:'2026-02-16', htEnd:'2026-02-20'},
+  {name:'Summer Term', start:'2026-04-20', end:'2026-07-21', htStart:'2026-05-25', htEnd:'2026-05-29'},
+];
+const DEFAULT_BH = [
+  {date:'2025-08-25',desc:"Summer Bank Holiday 2025"},
+  {date:'2025-12-25',desc:"Christmas Day 2025"},
+  {date:'2025-12-26',desc:"Boxing Day 2025"},
+  {date:'2026-01-01',desc:"New Year's Day 2026"},
+  {date:'2026-04-03',desc:"Good Friday 2026"},
+  {date:'2026-04-06',desc:"Easter Monday 2026"},
+  {date:'2026-05-04',desc:"Early May Bank Holiday 2026"},
+  {date:'2026-05-25',desc:"Spring Bank Holiday 2026"},
+  {date:'2026-08-31',desc:"Summer Bank Holiday 2026"},
+];
+const EVENT_OPTIONS = [
+  'Annual Leave','Autumn Half Term','Christmas Holidays',
+  'Spring Half Term','Easter Holidays','May Half Term',
+  'Summer Holidays','Inset Day'
+];
+
+function defaultData() {
+  return {
+    yearStart: '2025-09-01',
+    yearEnd: '2026-08-31',
+    terms: JSON.parse(JSON.stringify(DEFAULT_TERMS)),
+    bankHols: JSON.parse(JSON.stringify(DEFAULT_BH)),
+    insetDays: [],
+    toralAllowance: 25,
+    daleAllowance: 25,
+    toralAL: [],
+    daleAL: [],
+    ccNotes: {},   // key: "YYYY-MM-DD" -> {cc: string, notes: string}
+    navIcons: ['⚙️','🌿','🔷','📅','👶'],
+    p1Name: 'Toral',
+    p2Name: 'Dale',
+    skinTone: '',
+  };
+}
+
+let D = loadData();
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem('familyPlanner');
+    if (raw) return JSON.parse(raw);
+  } catch(e){}
+  return defaultData();
+}
+
+function save() {
+  const ys=document.getElementById('year-start');
+  if(ys) D.yearStart=ys.value;
+  const ye=document.getElementById('year-end');
+  if(ye) D.yearEnd=ye.value;
+  const ta=document.getElementById('toral-allowance');
+  if(ta) D.toralAllowance=parseFloat(ta.value)||25;
+  const da=document.getElementById('dale-allowance');
+  if(da) D.daleAllowance=parseFloat(da.value)||25;
+  localStorage.setItem('familyPlanner',JSON.stringify(D));
+  const ind=document.getElementById('save-indicator');
+  if(ind){ind.textContent='Saved ✓';setTimeout(()=>{const i=document.getElementById('save-indicator');if(i)i.textContent='All changes saved';},2000);}
+  driveMaybePush();
+}
+
+function p1(){ return D.p1Name||'Toral'; }
+function p2(){ return D.p2Name||'Dale'; }
+
+// ═══════════════════════════════════════════════════════════════
+// DATE UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function parseDate(s){ return s ? new Date(s+'T00:00:00') : null; }
+function fmtDate(d){ return d ? d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : ''; }
+function fmtShort(d){ return d ? d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : ''; }
+function dateStr(d){ // YYYY-MM-DD
+  if(!d) return '';
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function addDays(d, n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function isWeekend(d){ return d.getDay()===0||d.getDay()===6; }
+function networkDays(start, end, bhSet){
+  if(!start||!end) return 0;
+  let count=0, d=new Date(start);
+  const e=new Date(end);
+  while(d<=e){ if(!isWeekend(d)&&!bhSet.has(dateStr(d))) count++; d=addDays(d,1); }
+  return count;
+}
+const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ═══════════════════════════════════════════════════════════════
+// COMPUTED HELPERS
+// ═══════════════════════════════════════════════════════════════
+function getBHSet(){ return new Set(D.bankHols.map(b=>b.date)); }
+function getInsetSet(){ return new Set(D.insetDays.map(i=>i.date).filter(Boolean)); }
+
+function getHolidayLabel(d){
+  const ds = dateStr(d);
+  const bhSet = getBHSet();
+  const insetSet = getInsetSet();
+  if(bhSet.has(ds)) return 'Bank Holiday';
+  if(insetSet.has(ds)) return 'Inset Day';
+  const t = D.terms;
+  // Autumn half term
+  if(t[0]&&ds>=t[0].htStart&&ds<=t[0].htEnd) return 'Autumn Half Term';
+  // Spring half term
+  if(t[1]&&ds>=t[1].htStart&&ds<=t[1].htEnd) return 'Spring Half Term';
+  // May half term
+  if(t[2]&&ds>=t[2].htStart&&ds<=t[2].htEnd) return 'May Half Term';
+  // Christmas (between Autumn end+1 and Spring start-1)
+  if(t[0]&&t[1]&&ds>t[0].end&&ds<t[1].start) return 'Christmas Holidays';
+  // Easter (between Spring end+1 and Summer start-1)
+  if(t[1]&&t[2]&&ds>t[1].end&&ds<t[2].start) return 'Easter Holidays';
+  // Summer (after Summer term end) OR before Autumn term start
+  if(t[2]&&ds>t[2].end) return 'Summer Holidays';
+  if(t[0]&&ds<t[0].start) return 'Summer Holidays';
+  return ''; // in-term
+}
+
+function getALRanges(who){
+  const rows = who==='toral' ? D.toralAL : D.daleAL;
+  return rows.filter(r=>r.startDate&&r.endDate).map(r=>({s:r.startDate,e:r.endDate}));
+}
+function isOnAL(ds, who){
+  return getALRanges(who).some(r=>ds>=r.s&&ds<=r.e);
+}
+
+function getEventDates(event){
+  const t=D.terms;
+  if(event==='Autumn Half Term') return {s:t[0]?.htStart||'',e:t[0]?.htEnd||''};
+  if(event==='Spring Half Term') return {s:t[1]?.htStart||'',e:t[1]?.htEnd||''};
+  if(event==='May Half Term')    return {s:t[2]?.htStart||'',e:t[2]?.htEnd||''};
+  if(event==='Christmas Holidays'&&t[0]&&t[1]){
+    const s=addDays(parseDate(t[0].end),1);
+    const e=addDays(parseDate(t[1].start),-1);
+    return {s:dateStr(s),e:dateStr(e)};
+  }
+  if(event==='Easter Holidays'&&t[1]&&t[2]){
+    const s=addDays(parseDate(t[1].end),1);
+    const e=addDays(parseDate(t[2].start),-1);
+    return {s:dateStr(s),e:dateStr(e)};
+  }
+  if(event==='Summer Holidays'&&t[2]){
+    const s=addDays(parseDate(t[2].end),1);
+    const e=D.yearEnd||autoYearEnd(D.yearStart);
+    return {s:dateStr(s),e};
+  }
+  return {s:'',e:''};
+}
+
+function calcDays(startDate, endDate, halfDay){
+  if(!startDate||!endDate) return 0;
+  const bhSet=getBHSet();
+  let days = networkDays(parseDate(startDate),parseDate(endDate),bhSet);
+  if(halfDay) days-=0.5;
+  return days;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION + SIDEBAR TOGGLE
+// ═══════════════════════════════════════════════════════════════
+function getPageTitles(){ return {
+  'data-input':'Data Input',
+  'toral-al':p1()+' – Annual Leave',
+  'dale-al':p2()+' – Annual Leave',
+  'year-planner':'Year Planner',
+  'childcare':'Childcare Overview',
+  'guide':'How to Use'
+}; }
+
+function toggleSidebar(){
+  const sidebar = document.getElementById('sidebar');
+  if(sidebar.classList.contains('open')) closeSidebar();
+  else openSidebar();
+}
+function openSidebar(){
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  sidebar.classList.add('open');
+  backdrop.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar(){
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  sidebar.classList.remove('open');
+  backdrop.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    if(b.getAttribute('onclick')?.includes("'"+id+"'")) b.classList.add('active');
+  });
+  document.querySelectorAll('.bnav-btn').forEach(b=>{
+    if(b.dataset.page===id) b.classList.add('active');
+  });
+  document.getElementById('page-title').textContent = getPageTitles()[id]||id;
+  // Close sidebar on mobile after navigation
+  if(window.innerWidth<=768) closeSidebar();
+  if(id==='year-planner') renderYearPlanner();
+  if(id==='childcare') renderChildcare();
+  if(id==='toral-al'){ renderALStats('toral'); renderALTable('toral'); }
+  if(id==='dale-al'){ renderALStats('dale'); renderALTable('dale'); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA INPUT RENDERING
+// ═══════════════════════════════════════════════════════════════
+function renderTerms(){
+  const tb = document.getElementById('terms-tbody');
+  tb.innerHTML = D.terms.map((t,i)=>`
+    <tr>
+      <td><strong>${t.name}</strong></td>
+      <td><input type="date" value="${t.start}" onchange="D.terms[${i}].start=this.value;save();renderAll()"></td>
+      <td><input type="date" value="${t.end}" onchange="D.terms[${i}].end=this.value;save();renderAll()"></td>
+      <td><input type="date" value="${t.htStart}" onchange="D.terms[${i}].htStart=this.value;save();renderAll()"></td>
+      <td><input type="date" value="${t.htEnd}" onchange="D.terms[${i}].htEnd=this.value;save();renderAll()"></td>
+    </tr>`).join('');
+}
+
+function renderBH(){
+  const list = document.getElementById('bh-list');
+  list.innerHTML = `<table style='min-width:420px'><thead><tr><th style='width:36px'>#</th><th>Date</th><th>Description</th><th style='width:40px'></th></tr></thead><tbody>`+
+    D.bankHols.map((b,i)=>`<tr>
+      <td style="width:40px;color:var(--text-muted)">${i+1}</td>
+      <td><input type="date" value="${b.date}" style="width:140px" onchange="D.bankHols[${i}].date=this.value;save();renderAll()"></td>
+      <td><input type="text" value="${b.desc}" placeholder="Description" onchange="D.bankHols[${i}].desc=this.value;save()"></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeBH(${i})">×</button></td>
+    </tr>`).join('')+`</tbody></table>`;
+  document.getElementById('bh-count').textContent = D.bankHols.length+' entered';
+}
+
+function addBH(){ D.bankHols.push({date:'',desc:''}); renderBH(); }
+function removeBH(i){ D.bankHols.splice(i,1); save(); renderBH(); renderAll(); }
+
+function renderInset(){
+  const list = document.getElementById('inset-list');
+  list.innerHTML = `<table style='min-width:480px'><thead><tr><th style='width:36px'>#</th><th>Date</th><th>Description</th><th>Term</th><th style='width:40px'></th></tr></thead><tbody>`+
+    D.insetDays.map((d,i)=>`<tr>
+      <td style="width:40px;color:var(--text-muted)">${i+1}</td>
+      <td><input type="date" value="${d.date||''}" style="width:140px" onchange="D.insetDays[${i}].date=this.value;save();renderAll()"></td>
+      <td><input type="text" value="${d.desc||''}" placeholder="Description" onchange="D.insetDays[${i}].desc=this.value;save()"></td>
+      <td><input type="text" value="${d.term||''}" placeholder="Autumn/Spring/Summer" onchange="D.insetDays[${i}].term=this.value;save()"></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeInset(${i})">×</button></td>
+    </tr>`).join('')+`</tbody></table>`;
+  document.getElementById('inset-count').textContent = D.insetDays.length+' entered';
+  document.getElementById('add-inset-btn').style.display = D.insetDays.length>=10 ? 'none' : '';
+}
+
+function addInset(){
+  if(D.insetDays.length>=10){ toast('Maximum 10 inset days'); return; }
+  D.insetDays.push({date:'',desc:'',term:''});
+  renderInset();
+}
+function removeInset(i){ D.insetDays.splice(i,1); save(); renderInset(); renderAll(); }
+
+function autoYearEnd(startStr){
+  // Default: 31 August of the year after the start year
+  // e.g. start = 2025-09-01 -> end = 2026-08-31
+  if(!startStr) return '';
+  const s = parseDate(startStr);
+  if(!s) return '';
+  const endYear = s.getMonth() >= 8 ? s.getFullYear() + 1 : s.getFullYear();
+  return endYear + '-08-31';
+}
+
+function updateYearEnd(){
+  const startVal = D.yearStart||'2025-09-01';
+  const auto = autoYearEnd(startVal);
+  const yeEl = document.getElementById('year-end');
+  if(!yeEl) return;
+  // Only auto-fill if yearEnd not yet set or matches previous auto value
+  if(!D.yearEnd || D.yearEnd === autoYearEnd(D._lastYearStart||startVal)){
+    D.yearEnd = auto;
+  }
+  D._lastYearStart = startVal;
+  yeEl.value = D.yearEnd||auto;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AL SUMMARY
+// ═══════════════════════════════════════════════════════════════
+function renderALStats(who){
+  const allowance = who==='toral' ? D.toralAllowance : D.daleAllowance;
+  const rows = who==='toral' ? D.toralAL : D.daleAL;
+  const booked = rows.reduce((sum,r)=>{
+    if(!r.startDate||!r.endDate) return sum;
+    return sum + calcDays(r.startDate, r.endDate, r.halfDay);
+  },0);
+  const remaining = allowance - booked;
+  const el = document.getElementById(who+'-stats');
+  const pName = who==='toral' ? p1() : p2();
+  el.innerHTML = `
+    <div class="stat-card highlight">
+      <div class="val">${allowance}</div><div class="lbl">${pName} Allowance</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="color:var(--rose)">${booked}</div><div class="lbl">Days Booked</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="color:var(--teal)">${remaining}</div><div class="lbl">Days Remaining</div>
+    </div>`;
+}
+
+function renderALTable(who){
+  const rows = who==='toral' ? D.toralAL : D.daleAL;
+  const tableEl = document.getElementById(who+'-al-table');
+  if(rows.length===0){
+    tableEl.innerHTML='<p class="hint">No entries yet. Tap "+ Add Entry" to begin.</p>';
+    return;
+  }
+  const bhSet = getBHSet();
+  tableEl.innerHTML=`<div style='overflow-x:auto;-webkit-overflow-scrolling:touch'><table style='min-width:700px'>
+    <thead><tr>
+      <th class="al-row-event">Event</th>
+      <th>Reason / Label</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th>Half Day?</th>
+      <th>Days Taken</th>
+      <th>Notes</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows.map((r,i)=>{
+      // Always use stored dates so manual edits are preserved
+      const s = r.startDate||'';
+      const e = r.endDate||'';
+      const days = (s&&e) ? calcDays(s,e,r.halfDay) : '';
+      return `<tr>
+        <td><select class="al-row-event" onchange="setALEvent('${who}',${i},this.value)">
+          <option value="">-- select --</option>
+          ${EVENT_OPTIONS.map(o=>`<option value="${o}" ${r.event===o?'selected':''}>${o}</option>`).join('')}
+        </select></td>
+        <td><input type="text" value="${r.label||''}" placeholder="Label" onchange="D.${who}AL[${i}].label=this.value;save()"></td>
+        <td><input type="date" value="${s}" style="width:130px" onchange="D.${who}AL[${i}].startDate=this.value;save();renderALTable('${who}');renderALStats('${who}')"></td>
+        <td><input type="date" value="${e}" style="width:130px" onchange="D.${who}AL[${i}].endDate=this.value;save();renderALTable('${who}');renderALStats('${who}')"></td>
+        <td style="text-align:center"><input type="checkbox" ${r.halfDay?'checked':''} onchange="D.${who}AL[${i}].halfDay=this.checked;save();renderALTable('${who}');renderALStats('${who}')"></td>
+        <td style="text-align:center;font-weight:600;font-family:'DM Serif Display',serif;font-size:16px">${days}</td>
+        <td><input type="text" value="${r.notes||''}" placeholder="Notes" onchange="D.${who}AL[${i}].notes=this.value;save()"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeALRow('${who}',${i})">×</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function setALEvent(who, i, event){
+  const arr = who==='toral' ? D.toralAL : D.daleAL;
+  arr[i].event = event;
+  if(event&&event!=='Annual Leave'&&event!=='Inset Day'){
+    const dates = getEventDates(event);
+    arr[i].startDate = dates.s;
+    arr[i].endDate = dates.e;
+  }
+  save();
+  renderALTable(who);
+  renderALStats(who);
+}
+
+function addALRow(who){
+  const arr = who==='toral' ? D.toralAL : D.daleAL;
+  arr.push({event:'',label:'',startDate:'',endDate:'',halfDay:false,notes:''});
+  save();
+  renderALTable(who);
+  renderALStats(who);
+}
+
+function removeALRow(who,i){
+  const arr = who==='toral' ? D.toralAL : D.daleAL;
+  arr.splice(i,1);
+  save();
+  renderALTable(who);
+  renderALStats(who);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// YEAR PLANNER
+// ═══════════════════════════════════════════════════════════════
+function getYearDays(){
+  const s = parseDate(D.yearStart||'2025-09-01');
+  const e = parseDate(D.yearEnd||autoYearEnd(D.yearStart||'2025-09-01'));
+  if(!s||!e) return [];
+  const days=[];
+  let d = new Date(s);
+  while(d<=e){ days.push(new Date(d)); d=addDays(d,1); }
+  return days;
+}
+
+function renderYearPlanner(){
+  const days = getYearDays();
+  const hideWknd = document.getElementById('filter-hide-wknd').checked;
+  const hideTerm = document.getElementById('filter-hide-term').checked;
+
+  // Month jump
+  const months={};
+  days.forEach(d=>{ const k=d.getFullYear()+'-'+d.getMonth(); if(!months[k]) months[k]=d; });
+  const mj=document.getElementById('month-jump');
+  mj.innerHTML=Object.entries(months).map(([k,d])=>
+    `<option value="row-${dateStr(d)}">${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}</option>`).join('');
+
+  const tbody = document.getElementById('year-tbody');
+  let html='';
+  let lastMonth=-1;
+
+  days.forEach(d=>{
+    const ds=dateStr(d);
+    const wknd=isWeekend(d);
+    if(hideWknd&&wknd) return;
+    const label=getHolidayLabel(d);
+    if(hideTerm&&!label&&!wknd) return;
+
+    const toralOn=(!wknd&&label!=='Bank Holiday')&&isOnAL(ds,'toral');
+    const daleOn=(!wknd&&label!=='Bank Holiday')&&isOnAL(ds,'dale');
+    const ccData=D.ccNotes[ds]||{};
+    const ccVal=ccData.cc||'';
+    const manualNote=ccData.notes||'';
+    // Auto-generate AL note from leave data
+
+
+    const mn=d.getMonth();
+    // Add month id anchor on first day of each month
+    const monthAnchor = mn!==lastMonth ? `id="row-${ds}"` : '';
+    if(mn!==lastMonth) lastMonth=mn;
+
+    // Row class: month band + event overrides
+    let rowClass=`mth-${mn}`;
+    if(wknd) rowClass='day-weekend';
+    else if(label==='Bank Holiday') rowClass=`day-bh mth-${mn}`;
+    else if(label==='Inset Day') rowClass=`day-inset mth-${mn}`;
+    else if(label) rowClass=`day-school mth-${mn}`;
+
+    if(toralOn) rowClass+=' p1-al';
+    if(daleOn) rowClass+=' p2-al';
+
+    let eventBadge='';
+    if(label==='Bank Holiday') eventBadge=`<span class="badge-event badge-bh">${label}</span>`;
+    else if(label==='Inset Day') eventBadge=`<span class="badge-event badge-inset">${label}</span>`;
+    else if(label) eventBadge=`<span class="badge-event">${label}</span>`;
+
+    const toralBadge = toralOn?`<span class="badge-al">AL</span>`:(wknd||label==='Bank Holiday'?'<span style="color:#cbd5e1">—</span>':'');
+    const daleBadge  = daleOn ?`<span class="badge-al p2">AL</span>`:(wknd||label==='Bank Holiday'?'<span style="color:#cbd5e1">—</span>':'');
+
+    html+=`<tr class="${rowClass}" ${monthAnchor}>
+      <td class="date-col" style="font-weight:500">${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0,3)}</td>
+      <td style="color:${wknd?'var(--wknd-text)':'var(--text-muted)'}">${DAY_NAMES[d.getDay()]}</td>
+      <td>${eventBadge}</td>
+      <td class="p1-col">${toralBadge}</td>
+      <td class="p2-col">${daleBadge}</td>
+      <td class="cc-col">
+        <input class="cc-input" value="${ccVal||(toralOn&&daleOn?p1()+' + '+p2():toralOn?p1():daleOn?p2():'')}" placeholder="${wknd?'':'e.g. Nursery'}" data-date="${ds}" data-field="cc" onchange="saveCCNote(this)" ${wknd?'disabled':''}>
+      </td>
+      <td><input class="cc-input" style="width:130px" value="${manualNote}" placeholder="Notes" data-date="${ds}" data-field="notes" onchange="saveCCNote(this)" ${wknd?'disabled':''}></td>
+    </tr>`;
+  });
+
+  tbody.innerHTML=html||'<tr><td colspan="7" class="empty-row">No days to display with current filters</td></tr>';
+}
+
+function saveCCNote(input){
+  const ds=input.dataset.date, field=input.dataset.field;
+  if(!D.ccNotes[ds]) D.ccNotes[ds]={};
+  D.ccNotes[ds][field]=input.value;
+  save();
+}
+
+function jumpToMonth(id){
+  const el=document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHILDCARE OVERVIEW
+// ═══════════════════════════════════════════════════════════════
+const CO_PERIODS = ['Autumn Half Term','Christmas Holidays','Spring Half Term','Easter Holidays','May Half Term','Summer Holidays'];
+
+function renderChildcare(){
+  const days = getYearDays();
+  const bhSet = getBHSet();
+
+  // Build per-period stats
+  const stats = {};
+  CO_PERIODS.forEach(p=>{
+    stats[p]={working:0,toralDays:0,daleDays:0,bothOff:0,ccDays:0,label:''};
+  });
+
+  // Get AL date ranges
+  const toralRanges = getALRanges('toral');
+  const daleRanges  = getALRanges('dale');
+
+  function inRanges(ds, ranges){ return ranges.some(r=>ds>=r.s&&ds<=r.e); }
+
+  days.forEach(d=>{
+    if(isWeekend(d)) return;
+    const ds=dateStr(d);
+    const label=getHolidayLabel(d);
+    if(!label||label==='Bank Holiday'||label==='Inset Day') return;
+    if(!CO_PERIODS.includes(label)) return;
+    const s=stats[label];
+    s.working++;
+    const toralOn=inRanges(ds,toralRanges);
+    const daleOn=inRanges(ds,daleRanges);
+    if(toralOn) s.toralDays++;
+    if(daleOn) s.daleDays++;
+    if(toralOn&&daleOn) s.bothOff++;
+    // Count cc: manual entry OR AL on that day (auto-fill logic mirrors year planner)
+    const manualCc=D.ccNotes[ds]?.cc||'';
+    const autoCc=toralOn||daleOn?'auto':'';
+    if((manualCc||autoCc).trim()) s.ccDays++;
+  });
+
+  // Compute date labels
+  CO_PERIODS.forEach(p=>{
+    const dates=getEventDates(p);
+    if(dates.s&&dates.e)
+      stats[p].label=fmtShort(parseDate(dates.s))+' – '+fmtShort(parseDate(dates.e));
+  });
+
+  const tbody=document.getElementById('co-tbody');
+  let html='';
+  let totals={working:0,toralDays:0,daleDays:0,bothOff:0,ccDays:0};
+
+  CO_PERIODS.forEach(p=>{
+    const s=stats[p];
+    Object.keys(totals).forEach(k=>totals[k]+=s[k]);
+    const pct=s.working>0?Math.round(s.ccDays/s.working*100):0;
+    html+=`<tr>
+      <td><strong style="font-size:12px">${p}</strong><br><span style="font-size:10px;color:var(--text-muted)">${s.label}</span></td>
+      <td class="cc-num">${s.working}</td>
+      <td class="cc-num" style="color:var(--cc-dark)">${s.ccDays}</td>
+      <td>
+        <div style="font-size:12px;font-weight:600;color:${pct===100?'var(--teal)':pct>0?'var(--amber)':'var(--rose)'}">${s.ccDays} / ${s.working}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${pct}%</div>
+      </td>
+      <td class="cc-num" style="color:var(--p1-dark)">${s.toralDays}</td>
+      <td class="cc-num" style="color:var(--p2-dark)">${s.daleDays}</td>
+      <td class="cc-num" style="color:var(--teal)">${s.bothOff}</td>
+    </tr>`;
+  });
+
+  // Total
+  const tpct=totals.working>0?Math.round(totals.ccDays/totals.working*100):0;
+  html+=`<tr style="background:var(--surface2);font-weight:600;border-top:2px solid var(--border)">
+    <td><strong>TOTAL</strong></td>
+    <td class="cc-num">${totals.working}</td>
+    <td class="cc-num" style="color:var(--cc-dark)">${totals.ccDays}</td>
+    <td>
+      <div style="font-size:12px;font-weight:600;color:${tpct===100?'var(--teal)':tpct>0?'var(--amber)':'var(--rose)'}">${totals.ccDays} / ${totals.working}</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${tpct}%"></div></div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${tpct}%</div>
+    </td>
+    <td class="cc-num" style="color:var(--p1-dark)">${totals.toralDays}</td>
+    <td class="cc-num" style="color:var(--p2-dark)">${totals.daleDays}</td>
+    <td class="cc-num" style="color:var(--teal)">${totals.bothOff}</td>
+  </tr>`;
+
+  tbody.innerHTML=html;
+
+  // Annual leave summary section
+  // Build summary rows for each parent
+  function buildSummaryRows(alRows, colorVar, label){
+    // Group by event label
+    const byEvent = {};
+    alRows.forEach(r => {
+      if(!r.startDate||!r.endDate) return;
+      const key = r.event||r.label||'Annual Leave';
+      const days = calcDays(r.startDate, r.endDate, r.halfDay);
+      if(!byEvent[key]) byEvent[key] = 0;
+      byEvent[key] += days;
+    });
+    const entries = Object.entries(byEvent);
+    if(!entries.length) return '<p class="hint">No leave entered yet</p>';
+    const total = entries.reduce((s,[,d])=>s+d,0);
+    return entries.map(([ev, days]) =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--text)">${ev}</span>
+        <span style="font-weight:600;color:${colorVar};background:var(--surface2);border-radius:4px;padding:2px 8px">${days} day${days!==1?'s':''}</span>
+      </div>`
+    ).join('') +
+    `<div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-size:13px;font-weight:700;border-top:2px solid var(--border);margin-top:4px">
+      <span>Total AL used</span><span style="color:${colorVar}">${total} days</span>
+    </div>`;
+  }
+
+  const toralRows = D.toralAL||[];
+  const daleRows  = D.daleAL||[];
+  const toralAllowance = D.toralAllowance||25;
+  const daleAllowance  = D.daleAllowance||25;
+  const toralTotal = toralRows.reduce((s,r)=>s+(r.startDate&&r.endDate?calcDays(r.startDate,r.endDate,r.halfDay):0),0);
+  const daleTotal  = daleRows.reduce((s,r) =>s+(r.startDate&&r.endDate?calcDays(r.startDate,r.endDate,r.halfDay):0),0);
+
+  document.getElementById('co-summary').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+          <div class="section-title" style="font-size:14px;margin:0">${p1()} – Annual Leave</div>
+          <span style="font-size:12px;color:var(--text-muted)">${toralTotal} / ${toralAllowance} days used</span>
+        </div>
+        <div style="background:var(--surface2);border-radius:6px;height:6px;margin-bottom:14px;overflow:hidden">
+          <div style="height:100%;background:var(--p1-dark);border-radius:6px;width:${Math.min(100,Math.round(toralTotal/toralAllowance*100))}%"></div>
+        </div>
+        ${buildSummaryRows(toralRows,'var(--p1-dark)',p1())}
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+          <div class="section-title" style="font-size:14px;margin:0">${p2()} – Annual Leave</div>
+          <span style="font-size:12px;color:var(--text-muted)">${daleTotal} / ${daleAllowance} days used</span>
+        </div>
+        <div style="background:var(--surface2);border-radius:6px;height:6px;margin-bottom:14px;overflow:hidden">
+          <div style="height:100%;background:var(--p2-dark);border-radius:6px;width:${Math.min(100,Math.round(daleTotal/daleAllowance*100))}%"></div>
+        </div>
+        ${buildSummaryRows(daleRows,'var(--p2-dark)',p2())}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════════════
+function exportData(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='family-leave-planner.json'; a.click();
+  toast('Data exported!');
+}
+function importData(){ document.getElementById('import-file').click(); }
+function handleImport(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      D=JSON.parse(ev.target.result);
+      localStorage.setItem('familyPlanner',JSON.stringify(D));
+      initUI(); toast('Data imported successfully!');
+    } catch(err){ toast('Error: invalid JSON file'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER ALL (for when terms/bh change)
+// ═══════════════════════════════════════════════════════════════
+function renderAll(){
+  updateYearEnd();
+  const active=document.querySelector('.page.active')?.id;
+  if(active==='page-year-planner') renderYearPlanner();
+  if(active==='page-childcare') renderChildcare();
+  if(active==='page-toral-al'){ renderALTable('toral'); renderALStats('toral'); }
+  if(active==='page-dale-al'){ renderALTable('dale'); renderALStats('dale'); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+function initUI(){
+  document.getElementById('year-start').value = D.yearStart||'2025-09-01';
+  if(!D.yearEnd) D.yearEnd = autoYearEnd(D.yearStart||'2025-09-01');
+  const ta=document.getElementById('toral-allowance');
+  if(ta) ta.value = D.toralAllowance||25;
+  const da=document.getElementById('dale-allowance');
+  if(da) da.value = D.daleAllowance||25;
+  updateYearEnd();
+  renderTerms();
+  renderBH();
+  renderInset();
+  // Restore Drive status bar if previously connected
+  if(driveFileId){
+    const bar = document.getElementById('drive-bar');
+    if(bar) bar.style.display = 'flex';
+    const info = document.getElementById('drive-file-info');
+    if(info) info.textContent = driveFileName||'planner-data.json';
+    driveSetStatus('error','Tap ☁️ to re-sign in');
+  }
+}
+
+initUI();
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// NEW ACADEMIC YEAR ROLLOVER
+// ═══════════════════════════════════════════════════════════════
+function rollDateStr(dateStr, years){
+  if(!dateStr) return '';
+  const d = parseDate(dateStr);
+  if(!d) return '';
+  d.setFullYear(d.getFullYear() + years);
+  return dateStr2(d);
+}
+function dateStr2(d){
+  if(!d) return '';
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
+}
+function openNewYearModal(){
+  const newStart = rollDateStr(D.yearStart||'2025-09-01', 1);
+  const newEnd   = rollDateStr(D.yearEnd||autoYearEnd(D.yearStart), 1);
+  const startEl  = document.getElementById('ny-preview-start');
+  const endEl    = document.getElementById('ny-preview-end');
+  if(startEl) startEl.textContent = fmtDate(parseDate(newStart));
+  if(endEl)   endEl.textContent   = fmtDate(parseDate(newEnd));
+  document.getElementById('newyear-modal').classList.add('open');
+}
+function closeNewYearModal(){
+  document.getElementById('newyear-modal').classList.remove('open');
+}
+function rolloverYear(){
+  // 1. Export current data as backup
+  const yearLabel = (D.yearStart||'2025-09-01').slice(0,4);
+  const backup = JSON.stringify(D, null, 2);
+  const blob = new Blob([backup], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'family-leave-planner-' + yearLabel + '-backup.json';
+  a.click();
+
+  // 2. Build new data preserving names, allowances, icons
+  const newStart = rollDateStr(D.yearStart||'2025-09-01', 1);
+  const newEnd   = rollDateStr(D.yearEnd||autoYearEnd(D.yearStart), 1);
+
+  // Roll term dates forward by 1 year
+  function rollTerm(t){
+    return {
+      name: t.name,
+      start:   rollDateStr(t.start, 1),
+      end:     rollDateStr(t.end, 1),
+      htStart: rollDateStr(t.htStart, 1),
+      htEnd:   rollDateStr(t.htEnd, 1)
+    };
+  }
+
+  D = {
+    // Roll dates forward
+    yearStart: newStart,
+    yearEnd:   newEnd,
+    terms:     (D.terms||[]).map(rollTerm),
+    // Clear entries that belong to the old year
+    bankHols:  [],
+    insetDays: [],
+    toralAL:   [],
+    daleAL:    [],
+    ccNotes:   {},
+    // Preserve settings
+    toralAllowance: D.toralAllowance||25,
+    daleAllowance:  D.daleAllowance||25,
+    p1Name:    D.p1Name||'Toral',
+    p2Name:    D.p2Name||'Dale',
+    navIcons:  D.navIcons||['⚙️','🌿','🔷','📅','👶'],
+    skinTone:  D.skinTone||'',
+    _lastYearStart: newStart,
+  };
+
+  localStorage.setItem('familyPlanner', JSON.stringify(D));
+  closeNewYearModal();
+  initUI();
+  renderAll();
+  applyNavIcons();
+  applyNames();
+  toast('Rolled over to ' + fmtDate(parseDate(newStart)) + ' – backup downloaded!');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BOTTOM BAR ICON CUSTOMISATION
+// ═══════════════════════════════════════════════════════════════
+const NAV_PAGES = ['data-input','toral-al','dale-al','year-planner','childcare'];
+function getNavLabels(){ return ['Input', p1(), p2(), 'Planner', 'Childcare']; }
+const EMOJI_CATEGORIES = {
+  'Heads': [
+    '🧔','🧔‍♂','🧔‍♀',
+    '👨‍🦲','🧑‍🦲','👩‍🦲',
+    '👨','🧑','👩','👴','👵',
+  ],
+  'Smileys': ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','🫠','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🫡','🤔','🫢','🤭','🤫','🤥','😐','😑','😶','🫥','😏','😒','🙄','😬','🤐','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤯','🤠','🥸','🥳','😎','🤓','🧐','😕','🫤','😟','🙁','☹️','😮‍💨','😤','😠','😡','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
+  'People': ['👋','🤚','🖐️','✋','🖖','🫱','🫲','🫳','🫴','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👀','👁️','👅','👄','🫦','👶','🧒','👦','👧','🧑','👱','👨','🧔','🧔‍♂️','🧔‍♀️','👨‍🦳','🧑‍🦲','👨‍🦲','👩‍🦲','👩','🧓','👴','👵','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷','👮','💂','🥷','👷','🫅','🤴','👸','👳','👲','🧕','🤵','👰','🤰','🫃','🤱','👼','🎅','🤶','🧑‍🎄','🦸','🦹','🧙','🧚','🧛','🧜','🧝','🧞','🧟','🧌','💆','💇','🚶','🧍','🧎','🏃','💃','🕺','👫','👬','👭','💑','💏','👨‍👩‍👦','👨‍👩‍👧','👨‍👩‍👧‍👦','👪'],
+  'Nature': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞','🐜','🪲','🦟','🦗','🪳','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🦧','🦣','🐘','🦛','🦏','🐪','🐫','🦒','🦘','🦬','🐃','🐂','🐄','🦌','🦬','🐎','🐖','🐏','🐑','🦙','🐐','🦃','🦤','🦚','🦜','🦢','🦩','🕊️','🐓','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐁','🐀','🐿️','🦔','🌵','🎄','🌲','🌳','🌴','🪵','🌱','🌿','☘️','🍀','🎍','🪴','🎋','🍃','🍂','🍁','🪺','🪹','🍄','🐚','🪸','🪨','🌾','💐','🌷','🌹','🥀','🪷','🌺','🌸','🌼','🌻','🌞','🌝','🌛','🌜','🌚','🌕','🌖','🌗','🌘','🌑','🌒','🌓','🌔','🌙','🌟','⭐','🌠','🌌','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','☃️','⛄','🌬️','💨','💧','💦','🫧','🌊','🌈','🌂','☂️','🌍','🌎','🌏','🗺️','🧭','🏔️','⛰️','🌋','🗻','🏕️','🏖️','🏜️','🏝️','🏞️'],
+  'Food': ['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🫛','🥦','🥬','🥒','🌶️','🫑','🥕','🧄','🧅','🥔','🍠','🫚','🥐','🥯','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🦴','🌭','🍔','🍟','🍕','🫓','🌮','🌯','🫔','🥙','🧆','🥚','🍳','🥘','🍲','🫕','🥣','🥗','🍿','🧂','🥫','🍱','🍘','🍙','🍚','🍛','🍜','🍝','🍠','🍢','🍣','🍤','🍥','🥮','🍡','🥟','🥠','🥡','🦀','🦞','🦐','🦑','🦪','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','🍼','🥛','☕','🫖','🍵','🧃','🥤','🧋','🍶','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾','🧊','🥄','🍴','🍽️','🥢','🧆'],
+  'Travel': ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍️','🛵','🛺','🚲','🛴','🛹','🛼','🚏','🛣️','🛤️','🛞','⛽','🚨','🚥','🚦','🛑','🚧','⚓','🛟','⛵','🚤','🛥️','🛳️','⛴️','🚢','✈️','🛩️','🛫','🛬','🪂','💺','🚁','🚟','🚠','🚡','🛰️','🚀','🛸','🎆','🎇','🪄','🎑','🎃','🎄','🎋','🎍','🎎','🎏','🎐','🧧','🎁','🎗️','🎟️','🎫','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎪','🤹','🎭','🩰','🎨','🎬','🎤','🎧','🎼','🎵','🎶','🥁','🪘','🎷','🎺','🎸','🪕','🎻','🎹','🪗','🎮','🕹️','🎲','🎯','🎳','🏓','🏸','🥊','⛳','🎣','🤿','🎽','🛷','⛸️','🏹'],
+  'Objects': ['⌚','📱','💻','⌨️','🖥️','🖨️','🖱️','🖲️','💾','💿','📀','📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🧭','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🪫','🔌','💡','🔦','🕯️','🪔','🧯','🛢️','💸','💵','💴','💶','💷','💰','💳','💎','⚖️','🪜','🧰','🪛','🔧','🔨','⚒️','🛠️','⛏️','🪚','🔩','🪤','🧲','🔫','💣','🧨','🪓','🔪','🗡️','⚔️','🛡️','🪃','🏹','🪝','🔗','⛓️','🪝','🧲','🪜','🧪','🧫','🧬','🔭','🔬','🩺','🩻','🩹','💊','💉','🩸','🧴','🧷','🧹','🧺','🧻','🪣','🧼','🫧','🪥','🧽','🪒','🪮','🧳','🌂','☂️','🧵','🪡','🧶','🪢','👓','🕶️','🥽','🌂'],
+  'Symbols': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','✡️','🔯','🪯','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🔕','🔇','🔅','🔆','📶','🛜','📳','📴','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💲','➿','🔚','🔙','🔛','🔝','🔜','🎦','🔃','↩️','↪️','⤴️','⤵️','🔀','🔁','🔂','⬆️','⬇️','⬅️','➡️','↗️','↘️','↙️','↖️','↕️','↔️','🔼','🔽','⏩','⏪','⏫','⏬','⏭️','⏮️','⏯️','🔊','🔉','🔈','🔇'],
+  'Flags': ['🏁','🚩','🎌','🏴','🏳️','🏳️‍🌈','🏳️‍⚧️','🏴‍☠️','🇦🇺','🇧🇷','🇨🇦','🇨🇳','🇩🇪','🇪🇺','🇫🇷','🇬🇧','🇮🇳','🇮🇹','🇯🇵','🇰🇷','🇲🇽','🇳🇿','🇷🇺','🇸🇦','🇸🇬','🇪🇸','🇿🇦','🇸🇪','🇨🇭','🇺🇸'],
+};
+const EMOJI_CAT_NAMES = Object.keys(EMOJI_CATEGORIES);
+let currentEmojiCat = EMOJI_CAT_NAMES[0];
+let currentSkinTone = ''; // empty = default yellow
+
+// Emojis that support skin tone modification
+const SKIN_TONE_BASE = new Set(['👋','🤚','🖐️','✋','🖖','🫱','🫲','🫳','🫴','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','💅','🤳','💪','🦵','🦶','👂','🦻','👃','👶','🧒','👦','👧','🧑','👱','👨','🧔','🧔‍♂️','🧔‍♀️','👨‍🦳','🧑‍🦲','👨‍🦲','👩‍🦲','👩','🧓','👴','👵','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷','👮','💂','🥷','👷','🫅','🤴','👸','👳','👲','🧕','🤵','👰','🤰','🫃','🤱','👼','🎅','🤶','🦸','🦹','🧙','🧚','🧛','🧜','🧝','💆','💇','🚶','🧍','🧎','🏃','💃','🕺','🧔‍♂','🧔‍♀','🧔']);
+
+const SKIN_TONES = [
+  {mod:'', label:'🟡', title:'Default'},
+  {mod:'\u{1F3FB}', label:'🏻', title:'Light'},
+  {mod:'\u{1F3FC}', label:'🏼', title:'Medium-Light'},
+  {mod:'\u{1F3FD}', label:'🏽', title:'Medium'},
+  {mod:'\u{1F3FE}', label:'🏾', title:'Medium-Dark'},
+  {mod:'\u{1F3FF}', label:'🏿', title:'Dark'},
+];
+
+function applyTone(emoji){
+  if(!currentSkinTone) return emoji;
+  // Strip FE0F and existing tone modifiers
+  const clean = emoji.replace(/\uFE0F/g,'').replace(/[\u{1F3FB}-\u{1F3FF}]/gu,'');
+  const base = emoji.replace(/\uFE0F/g,'');
+  if(!SKIN_TONE_BASE.has(emoji)&&!SKIN_TONE_BASE.has(base)&&!SKIN_TONE_BASE.has(clean)) return emoji;
+  // For ZWJ sequences (contain U+200D), insert tone after base char, before ZWJ
+  const ZWJ = '\u200D';
+  if(clean.includes(ZWJ)){
+    const parts = clean.split(ZWJ);
+    parts[0] = parts[0] + currentSkinTone;
+    return parts.join(ZWJ);
+  }
+  // Simple emoji: append tone at end
+  return clean + currentSkinTone;
+}
+
+function renderSkinTonePicker(){
+  const el = document.getElementById('skin-tone-picker');
+  if(!el) return;
+  el.innerHTML = SKIN_TONES.map(t=>`
+    <button class="skin-tone-btn ${t.mod===currentSkinTone?'active':''}" title="${t.title}" onclick="setSkinTone('${t.mod}')">${t.label}</button>`).join('');
+}
+
+function setSkinTone(mod){
+  currentSkinTone = mod;
+  renderSkinTonePicker();
+  renderEmojiGrid();
+}
+let iconPickerSelectedTab = 0;
+let iconPickerTemp = [];
+
+function openIconModal(){
+  iconPickerTemp = [...(D.navIcons||['⚙️','🌿','🔷','📅','👶'])];
+  iconPickerSelectedTab = 0;
+  currentEmojiCat = EMOJI_CAT_NAMES[0];
+  currentSkinTone = D.skinTone||'';
+  renderIconTabRow();
+  renderSkinTonePicker();
+  renderEmojiCatTabs();
+  renderEmojiGrid();
+  document.getElementById('name-p1').value = D.p1Name||'Toral';
+  document.getElementById('name-p2').value = D.p2Name||'Dale';
+  document.getElementById('icon-modal').classList.add('open');
+}
+function closeIconModal(){
+  document.getElementById('icon-modal').classList.remove('open');
+}
+function saveIconModal(){
+  D.navIcons = [...iconPickerTemp];
+  D.skinTone = currentSkinTone;
+  const n1 = document.getElementById('name-p1').value.trim();
+  const n2 = document.getElementById('name-p2').value.trim();
+  if(n1) D.p1Name = n1;
+  if(n2) D.p2Name = n2;
+  save();
+  applyNavIcons();
+  applyNames();
+  closeIconModal();
+  toast('Settings saved!');
+}
+function renderIconTabRow(){
+  const el = document.getElementById('icon-tab-row');
+  el.innerHTML = NAV_PAGES.map((p,i)=>`
+    <button class="icon-tab-btn ${i===iconPickerSelectedTab?'selected':''}" onclick="selectIconTab(${i})">
+      <span class="tab-icon-preview">${iconPickerTemp[i]||'❓'}</span>
+      <span>${getNavLabels()[i]}</span>
+    </button>`).join('');
+}
+function renderEmojiCatTabs(){
+  const el = document.getElementById('emoji-cat-tabs');
+  if(!el) return;
+  el.innerHTML = EMOJI_CAT_NAMES.map(cat=>`
+    <button class="emoji-cat-tab ${cat===currentEmojiCat?'active':''}" onclick="setEmojiCat('${cat}')">${cat}</button>`).join('');
+}
+function renderEmojiGrid(){
+  const el = document.getElementById('emoji-grid');
+  if(!el) return;
+  el.innerHTML = '';
+  const current = iconPickerTemp[iconPickerSelectedTab];
+  const pool = EMOJI_CATEGORIES[currentEmojiCat]||[];
+  pool.forEach(function(e){
+    const toned = applyTone(e);
+    const btn = document.createElement('button');
+    btn.className = 'emoji-opt' + (toned === current ? ' picked' : '');
+    btn.textContent = toned;
+    btn.addEventListener('click', function(){ pickEmoji(toned); });
+    el.appendChild(btn);
+  });
+}
+function setEmojiCat(cat){
+  currentEmojiCat = cat;
+  renderEmojiCatTabs();
+  renderEmojiGrid();
+}
+function selectIconTab(i){
+  iconPickerSelectedTab = i;
+  renderIconTabRow();
+  renderEmojiCatTabs();
+  renderEmojiGrid();
+}
+function pickEmoji(e){
+  iconPickerTemp[iconPickerSelectedTab] = e;
+  renderIconTabRow();
+  renderEmojiGrid();
+}
+function applyNavIcons(){
+  const icons = D.navIcons||['⚙️','🌿','🔷','📅','👶'];
+  // Update bottom nav
+  document.querySelectorAll('.bnav-btn').forEach((btn,i)=>{
+    const iconEl = btn.querySelector('.bnav-icon');
+    if(iconEl && icons[i]) iconEl.textContent = icons[i];
+  });
+  // Update sidebar icons to match
+  icons.forEach((icon,i)=>{
+    const el = document.getElementById('sidebar-icon-'+i);
+    if(el) el.textContent = icon;
+  });
+}
+
+function applyNames(){
+  const n1=p1(), n2=p2();
+  const ids = {
+    'nav-toral-lbl':n1,'nav-dale-lbl':n2,
+    'al-toral-hdr':n1,'al-dale-hdr':n2,
+    'key-toral':n1,'key-dale':n2,
+    'yp-th-toral':n1,'yp-th-dale':n2,
+    'co-th-toral':n1,'co-th-dale':n2,
+    'bnav-lbl-toral':n1,'bnav-lbl-dale':n2,
+    'guide-p1-lbl':n1,'guide-p2-lbl':n2,
+    'guide-key-toral':n1,'guide-key-dale':n2
+  };
+  Object.entries(ids).forEach(([id,val])=>{ const el=document.getElementById(id); if(el) el.textContent=val; });
+  // hint text
+  const coHint=document.getElementById('co-hint-names');
+  if(coHint) coHint.innerHTML=n1+' &amp; '+n2;
+  // re-render active page so tables update
+  const active=document.querySelector('.page.active')?.id;
+  if(active==='page-toral-al'){ renderALStats('toral'); renderALTable('toral'); }
+  if(active==='page-dale-al'){ renderALStats('dale'); renderALTable('dale'); }
+  if(active==='page-childcare') renderChildcare();
+  if(active==='page-year-planner') renderYearPlanner();
+}
+
+// Long-press on bottom nav to open customiser
+let pressTimer = null;
+document.getElementById('bottom-nav').addEventListener('touchstart', e=>{
+  pressTimer = setTimeout(()=>{ openIconModal(); },600);
+},{passive:true});
+document.getElementById('bottom-nav').addEventListener('touchend', ()=>clearTimeout(pressTimer));
+document.getElementById('bottom-nav').addEventListener('touchmove', ()=>clearTimeout(pressTimer));
+
+// Also add a small gear icon in topbar on mobile to open it
+// Apply icons and names on load
+applyNavIcons();
+applyNames();
+</script>
+</body>
+</html>
