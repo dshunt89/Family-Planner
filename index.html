@@ -709,6 +709,7 @@ input[type=checkbox]{width:14px;height:14px;cursor:pointer}
 // GOOGLE DRIVE SYNC
 // ═══════════════════════════════════════════════════════════════
 const DRIVE_CLIENT_ID = '549860156222-g5gkcmk6nt40rhunj14nrtgo0pdik1oa.apps.googleusercontent.com';
+const DRIVE_FOLDER_ID = '1dMpGbnxtJQYWaz1Tr9dbAjmeheNBkK7i';
 const DRIVE_API    = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3';
 let driveToken    = null;
@@ -823,7 +824,7 @@ async function driveSaveNew(fromConnected){
   try{
     const boundary = 'planner_' + Date.now();
     const CRLF = '\r\n';
-    const meta = JSON.stringify({name: fileName, mimeType:'application/json'});
+    const meta = JSON.stringify({name: fileName, mimeType:'application/json', parents:[DRIVE_FOLDER_ID]});
     const body = '--'+boundary+CRLF
       +'Content-Type: application/json; charset=UTF-8'+CRLF+CRLF
       +meta+CRLF
@@ -876,7 +877,7 @@ async function driveListFiles(){
   listEl.appendChild(loadDiv);
 
   try{
-    const q = encodeURIComponent("mimeType='application/json' and trashed=false");
+    const q = encodeURIComponent("mimeType='application/json' and trashed=false and '" + DRIVE_FOLDER_ID + "' in parents");
     const url = DRIVE_API+'/files?q='+q+'&fields=files(id,name,modifiedTime)&orderBy=modifiedTime+desc&pageSize=100';
     const r = await fetch(url, {headers:{Authorization:'Bearer '+driveToken}});
 
